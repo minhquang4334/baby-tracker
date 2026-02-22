@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 // hcmcTZ is GMT+7 (Ho Chi Minh City). All timestamps are stored in this zone.
@@ -32,7 +32,7 @@ func Open(dbPath string) (*Store, error) {
 		return nil, fmt.Errorf("create db dir: %w", err)
 	}
 
-	db, err := sql.Open("sqlite3", dbPath+"?_journal_mode=WAL&_foreign_keys=on")
+	db, err := sql.Open("sqlite", dbPath+"?_pragma=journal_mode(WAL)&_pragma=foreign_keys(on)")
 	if err != nil {
 		return nil, fmt.Errorf("open db: %w", err)
 	}

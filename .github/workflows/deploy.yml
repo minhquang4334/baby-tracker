@@ -46,7 +46,7 @@ jobs:
         run: go vet ./...
 
       - name: Build Go binary
-        run: CGO_ENABLED=1 go build -o baby-care .
+        run: go build -o baby-care .
 
   # ── Deploy: trigger Railway on main push ────────────────────────────────────
   deploy:

@@ -32,10 +32,10 @@ frontend-watch:
 		--external:*.woff2
 
 backend:
-	CGO_ENABLED=1 go build -o $(BINARY) .
+	go build -o $(BINARY) .
 
 run:
-	CGO_ENABLED=1 go run . --port 8080
+	go run . --port 8080
 
 clean:
 	rm -f $(BINARY)

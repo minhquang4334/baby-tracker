@@ -115,9 +115,6 @@ A fast, minimal baby care tracking web app built for parents who want to log sle
 
 - Go 1.26+
 - Node.js 20+
-- gcc (required for CGO / sqlite3)
-  - macOS: `xcode-select --install`
-  - Ubuntu/Debian: `sudo apt-get install build-essential`
 
 ### Setup
 
@@ -334,7 +331,7 @@ The image uses a 3-stage build to keep the final image small:
 | Stage | Base | Purpose |
 |-------|------|---------|
 | `frontend-builder` | `node:20-slim` | `npm ci` + esbuild bundle |
-| `go-builder` | `golang:1.26-bookworm` | `go build` with CGO (gcc included) |
+| `go-builder` | `golang:1.26-alpine` | `go build` (pure Go, no CGO) |
 | runtime | `debian:bookworm-slim` | Final image — just the binary + libc |
 
 ## Design System
@@ -359,7 +356,7 @@ The image uses a 3-stage build to keep the final image small:
 | `make deps` | `npm install` + `go mod download` |
 | `make frontend` | One-shot esbuild bundle to `static/` |
 | `make frontend-watch` | esbuild in watch mode (dev) |
-| `make backend` | `CGO_ENABLED=1 go build -o baby-care .` |
+| `make backend` | `go build -o baby-care .` |
 | `make run` | `go run . --port 8080` |
 | `make clean` | Remove binary and built static assets |
 
