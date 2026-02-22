@@ -177,3 +177,31 @@
   background: var(--color-feeding-bg);
   color: var(--color-feeding);
 }
+
+/* Bottle ml preset buttons */
+.ml-presets {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.ml-preset-btn {
+  flex: 1;
+  min-width: 48px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.ml-preset-btn:hover,
+.ml-preset-btn:active {
+  border-color: var(--color-feeding);
+  background: var(--color-feeding-bg);
+  color: var(--color-feeding);
+}

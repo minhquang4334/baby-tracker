@@ -87,10 +87,41 @@
   box-shadow: var(--shadow-sm);
 }
 
+.timeline-content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .timeline-title {
   font-size: 14px;
   font-weight: 600;
   color: var(--color-text);
+  flex: 1;
+}
+
+.timeline-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.timeline-action-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  transition: background 0.15s;
+}
+
+.timeline-action-btn:hover {
+  background: var(--color-border);
 }
 
 .timeline-detail {

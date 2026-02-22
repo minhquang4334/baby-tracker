@@ -3,13 +3,16 @@ import { api } from '../api';
 import { state } from '../state';
 import { showToast } from './toast';
 import { formatTime, formatElapsed, elapsedSeconds, nowISO } from '../utils/date';
+import type { FeedingLog } from '../types/models';
 
 type FeedTab = 'breast' | 'bottle';
+
+const ML_PRESETS = [30, 60, 90, 120, 150];
 
 export function renderFeedingModal(onSave: () => void): HTMLElement {
   const activeFeeding = state.activeFeeding.get();
   let timerInterval: ReturnType<typeof setInterval> | null = null;
-  let currentTab: FeedTab = 'breast';
+  let currentTab: FeedTab = 'bottle';
 
   const overlay = h('div', { class: 'modal-overlay' });
   const modal = h('div', { class: 'modal' });
@@ -64,15 +67,15 @@ export function renderFeedingModal(onSave: () => void): HTMLElement {
 
     modal.appendChild(h('div', { class: 'modal-actions', style: 'flex-direction: column' }, stopBtn));
   } else {
-    // New feeding
-    const tabBreast = h('button', { class: 'feed-type-tab active', onClick: () => switchTab('breast') }, '🤱 Breast') as HTMLButtonElement;
-    const tabBottle = h('button', { class: 'feed-type-tab', onClick: () => switchTab('bottle') }, '🍼 Bottle') as HTMLButtonElement;
+    // New feeding — default to Bottle tab
+    const tabBreast = h('button', { class: 'feed-type-tab', onClick: () => switchTab('breast') }, '🤱 Breast') as HTMLButtonElement;
+    const tabBottle = h('button', { class: 'feed-type-tab active', onClick: () => switchTab('bottle') }, '🍼 Bottle') as HTMLButtonElement;
 
     modal.appendChild(h('div', { class: 'feed-type-tabs' }, tabBreast, tabBottle));
 
     const breastSection = renderBreastSection(close, onSave);
     const bottleSection = renderBottleSection(close, onSave);
-    bottleSection.style.display = 'none';
+    breastSection.style.display = 'none';
 
     modal.appendChild(breastSection);
     modal.appendChild(bottleSection);
@@ -85,6 +88,75 @@ export function renderFeedingModal(onSave: () => void): HTMLElement {
       bottleSection.style.display = tab === 'bottle' ? '' : 'none';
     }
   }
+
+  setTimeout(() => overlay.classList.add('open'), 10);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+  return overlay;
+}
+
+export function renderBottleEditModal(feeding: FeedingLog, onSave: () => void): HTMLElement {
+  const overlay = h('div', { class: 'modal-overlay' });
+  const modal = h('div', { class: 'modal' });
+
+  const close = () => {
+    overlay.classList.remove('open');
+    setTimeout(() => overlay.remove(), 300);
+  };
+
+  overlay.appendChild(modal);
+  modal.appendChild(h('div', { class: 'modal-handle' }));
+  modal.appendChild(h('div', { class: 'modal-header' },
+    h('h2', { class: 'modal-title' }, 'Edit Bottle Amount'),
+    h('button', { class: 'modal-close', onClick: close }, '×'),
+  ));
+
+  const mlInput = h('input', {
+    class: 'form-input',
+    type: 'number',
+    value: String(feeding.quantity_ml ?? ''),
+    min: '0',
+    max: '500',
+    step: '5',
+    placeholder: 'ml',
+  }) as HTMLInputElement;
+
+  const presetRow = h('div', { class: 'ml-presets' });
+  for (const ml of ML_PRESETS) {
+    presetRow.appendChild(h('button', {
+      class: 'ml-preset-btn',
+      onClick: () => { mlInput.value = String(ml); },
+    }, `${ml}`));
+  }
+
+  const saveBtn = h('button', {
+    class: 'btn btn-primary btn-full',
+    onClick: async () => {
+      const ml = parseInt(mlInput.value, 10);
+      if (isNaN(ml) || ml < 0) { showToast('Enter a valid quantity', 'error'); return; }
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<div class="spinner"></div>';
+      try {
+        await api.updateFeeding(feeding.id, { quantity_ml: ml });
+        showToast(`Updated: ${ml}ml`);
+        onSave();
+        close();
+      } catch (e: any) {
+        showToast(e.message, 'error');
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save';
+      }
+    },
+  }, 'Save');
+
+  modal.appendChild(h('div', { class: 'modal-body' },
+    presetRow,
+    h('div', { class: 'form-group' },
+      h('label', { class: 'form-label' }, 'Amount (ml)'),
+      mlInput,
+    ),
+  ));
+  modal.appendChild(h('div', { class: 'modal-actions' }, saveBtn));
 
   setTimeout(() => overlay.classList.add('open'), 10);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
@@ -140,6 +212,14 @@ function renderBottleSection(close: () => void, onSave: () => void): HTMLElement
     placeholder: 'ml',
   }) as HTMLInputElement;
 
+  const presetRow = h('div', { class: 'ml-presets' });
+  for (const ml of ML_PRESETS) {
+    presetRow.appendChild(h('button', {
+      class: 'ml-preset-btn',
+      onClick: () => { mlInput.value = String(ml); },
+    }, `${ml}`));
+  }
+
   const saveBtn = h('button', {
     class: 'btn btn-primary btn-full',
     onClick: async () => {
@@ -163,6 +243,7 @@ function renderBottleSection(close: () => void, onSave: () => void): HTMLElement
 
   return h('div', {},
     h('div', { class: 'modal-body' },
+      presetRow,
       h('div', { class: 'form-group' },
         h('label', { class: 'form-label' }, 'Amount (ml)'),
         mlInput,

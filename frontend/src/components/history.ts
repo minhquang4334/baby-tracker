@@ -2,6 +2,8 @@ import { h } from '../utils/dom';
 import { api } from '../api';
 import { renderNav } from './nav';
 import { renderQuickAdd } from './quick-add';
+import { showToast } from './toast';
+import { renderBottleEditModal } from './feeding-modal';
 import { formatTime, formatDateFull, formatDuration, todayISO } from '../utils/date';
 import type { SleepLog, FeedingLog, DiaperLog } from '../types/models';
 
@@ -96,9 +98,15 @@ export function renderHistory(): HTMLElement {
           const detail = s.end_time
             ? `${formatTime(s.start_time)} → ${formatTime(s.end_time)}${s.duration_minutes ? ` · ${formatDuration(s.duration_minutes)}` : ''}`
             : `${formatTime(s.start_time)} — in progress`;
+          const onDelete = async () => {
+            if (!confirm('Delete this sleep log?')) return;
+            await api.deleteSleep(s.id);
+            showToast('Sleep deleted');
+            renderTimeline();
+          };
           items.push({
             time: s.start_time,
-            el: timelineItem('sleep', '😴', 'Sleep', detail, s.start_time),
+            el: timelineItem('sleep', '😴', 'Sleep', detail, s.start_time, null, onDelete),
           });
         }
       }
@@ -110,9 +118,18 @@ export function renderHistory(): HTMLElement {
           const detail = f.quantity_ml
             ? `${typeLabel[f.feed_type]} · ${f.quantity_ml}ml`
             : `${typeLabel[f.feed_type]}${f.duration_minutes ? ` · ${formatDuration(f.duration_minutes)}` : ''}`;
+          const onEdit = f.feed_type === 'bottle' ? () => {
+            document.getElementById('app')!.appendChild(renderBottleEditModal(f, renderTimeline));
+          } : null;
+          const onDelete = async () => {
+            if (!confirm('Delete this feeding log?')) return;
+            await api.deleteFeeding(f.id);
+            showToast('Feeding deleted');
+            renderTimeline();
+          };
           items.push({
             time: f.start_time,
-            el: timelineItem('feeding', '🍼', 'Feeding', detail, f.start_time),
+            el: timelineItem('feeding', '🍼', 'Feeding', detail, f.start_time, onEdit, onDelete),
           });
         }
       }
@@ -121,9 +138,15 @@ export function renderHistory(): HTMLElement {
         const diaperLogs: DiaperLog[] = results[ri++];
         const dLabel: Record<string, string> = { wet: 'Wet 💧', dirty: 'Dirty 💩', mixed: 'Mixed 🔄' };
         for (const d of diaperLogs) {
+          const onDelete = async () => {
+            if (!confirm('Delete this diaper log?')) return;
+            await api.deleteDiaper(d.id);
+            showToast('Diaper log deleted');
+            renderTimeline();
+          };
           items.push({
             time: d.changed_at,
-            el: timelineItem('diaper', '🚼', 'Diaper', dLabel[d.diaper_type] ?? d.diaper_type, d.changed_at),
+            el: timelineItem('diaper', '🚼', 'Diaper', dLabel[d.diaper_type] ?? d.diaper_type, d.changed_at, null, onDelete),
           });
         }
       }
@@ -168,11 +191,30 @@ function timelineItem(
   title: string,
   detail: string,
   time: string,
+  onEdit: (() => void) | null = null,
+  onDelete: (() => void) | null = null,
 ): HTMLElement {
+  const actions = h('div', { class: 'timeline-actions' });
+  if (onEdit) {
+    actions.appendChild(h('button', {
+      class: 'timeline-action-btn',
+      onClick: (e: Event) => { e.stopPropagation(); onEdit(); },
+    }, '✏️'));
+  }
+  if (onDelete) {
+    actions.appendChild(h('button', {
+      class: 'timeline-action-btn timeline-action-delete',
+      onClick: (e: Event) => { e.stopPropagation(); onDelete(); },
+    }, '🗑️'));
+  }
+
   return h('div', { class: 'timeline-item' },
     h('div', { class: `timeline-dot timeline-dot-${category}` }, emoji),
     h('div', { class: 'timeline-content' },
-      h('div', { class: 'timeline-title' }, title),
+      h('div', { class: 'timeline-content-header' },
+        h('div', { class: 'timeline-title' }, title),
+        actions,
+      ),
       h('div', { class: 'timeline-detail' }, detail),
       h('div', { class: 'timeline-time' }, formatTime(time)),
     ),
