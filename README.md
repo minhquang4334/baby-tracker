@@ -19,7 +19,7 @@ A fast, minimal baby care tracking web app built for parents who want to log sle
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | Go 1.22, `net/http` (native method+path routing) |
+| Backend | Go 1.26, `net/http` (native method+path routing) |
 | Database | SQLite via `go-sqlite3` (WAL mode, FK enforcement) |
 | Frontend | Vanilla TypeScript, no framework |
 | Bundler | esbuild (outputs a single `app.js` + inlined CSS) |
@@ -113,7 +113,7 @@ A fast, minimal baby care tracking web app built for parents who want to log sle
 
 ### Prerequisites
 
-- Go 1.22+
+- Go 1.26+
 - Node.js 20+
 - gcc (required for CGO / sqlite3)
   - macOS: `xcode-select --install`
@@ -334,7 +334,7 @@ The image uses a 3-stage build to keep the final image small:
 | Stage | Base | Purpose |
 |-------|------|---------|
 | `frontend-builder` | `node:20-slim` | `npm ci` + esbuild bundle |
-| `go-builder` | `golang:1.22-bookworm` | `go build` with CGO (gcc included) |
+| `go-builder` | `golang:1.26-bookworm` | `go build` with CGO (gcc included) |
 | runtime | `debian:bookworm-slim` | Final image — just the binary + libc |
 
 ## Design System

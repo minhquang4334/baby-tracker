@@ -20,7 +20,7 @@ RUN cd frontend && npx esbuild src/main.ts \
     cp index.html ../static/index.html
 
 # ── Stage 2: Build Go binary ─────────────────────────────────────────────────
-FROM golang:1.22-bookworm AS go-builder
+FROM golang:1.26-bookworm AS go-builder
 
 WORKDIR /app
 
