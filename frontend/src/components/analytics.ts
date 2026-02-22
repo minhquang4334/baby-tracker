@@ -49,19 +49,23 @@ export function renderAnalyticsScreen(): HTMLElement {
     const totalFeedings = data.reduce((s, d) => s + d.feeding_count, 0);
     const totalDiapers = data.reduce((s, d) => s + d.diaper_count, 0);
     const totalBottleML = data.reduce((s, d) => s + d.bottle_ml_total, 0);
-    const bottleDays = data.filter(d => d.bottle_feed_count > 0).length || 1;
-    const days = data.length || 1;
 
-    const avgSleep = Math.round(totalSleepMinutes / days);
-    const avgFeeding = (totalFeedings / days).toFixed(1);
-    const avgDiaper = (totalDiapers / days).toFixed(1);
-    const avgBottleL = totalBottleML > 0 ? (totalBottleML / bottleDays / 1000).toFixed(2) + ' L' : '—';
+    // Average over days that actually have data (skip empty days)
+    const sleepDays   = data.filter(d => d.sleep_minutes > 0).length || 1;
+    const feedingDays = data.filter(d => d.feeding_count > 0).length || 1;
+    const diaperDays  = data.filter(d => d.diaper_count > 0).length || 1;
+    const bottleDays  = data.filter(d => d.bottle_feed_count > 0).length || 1;
+
+    const avgSleep    = Math.round(totalSleepMinutes / sleepDays);
+    const avgFeeding  = (totalFeedings / feedingDays).toFixed(1);
+    const avgDiaper   = (totalDiapers / diaperDays).toFixed(1);
+    const avgBottleML = totalBottleML > 0 ? Math.round(totalBottleML / bottleDays) + ' ml' : '—';
 
     statsRow.innerHTML = '';
     statsRow.appendChild(statCard('😴', formatDuration(avgSleep), 'Avg sleep/day'));
     statsRow.appendChild(statCard('🍼', avgFeeding, 'Avg feeds/day'));
     statsRow.appendChild(statCard('🚼', avgDiaper, 'Avg diapers/day'));
-    statsRow.appendChild(statCard('🍶', avgBottleL, 'Avg bottle/day'));
+    statsRow.appendChild(statCard('🍶', avgBottleML, 'Avg bottle/day'));
 
     // Sleep chart
     sleepChartSection.innerHTML = '';
