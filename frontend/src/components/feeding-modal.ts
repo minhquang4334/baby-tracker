@@ -2,7 +2,7 @@ import { h } from '../utils/dom';
 import { api } from '../api';
 import { state } from '../state';
 import { showToast } from './toast';
-import { formatTime, formatElapsed, elapsedSeconds, nowISO } from '../utils/date';
+import { formatTime, formatElapsed, elapsedSeconds, nowISO, isoToLocalInput, localInputToISO } from '../utils/date';
 import type { FeedingLog } from '../types/models';
 
 type FeedTab = 'breast' | 'bottle';
@@ -251,4 +251,82 @@ function renderBottleSection(close: () => void, onSave: () => void): HTMLElement
     ),
     h('div', { class: 'modal-actions' }, saveBtn),
   );
+}
+
+export function renderBreastFeedEditModal(feeding: FeedingLog, onSave: () => void): HTMLElement {
+  const overlay = h('div', { class: 'modal-overlay' });
+  const modal = h('div', { class: 'modal' });
+  overlay.appendChild(modal);
+
+  const close = () => {
+    overlay.classList.remove('open');
+    setTimeout(() => overlay.remove(), 300);
+  };
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+  let selectedSide = feeding.feed_type as 'breast_left' | 'breast_right';
+
+  const leftBtn = h('button', {
+    class: `breast-btn${selectedSide === 'breast_left' ? ' active' : ''}`,
+    style: selectedSide === 'breast_left' ? 'outline: 2px solid var(--color-feeding)' : '',
+    onClick: () => {
+      selectedSide = 'breast_left';
+      leftBtn.style.outline = '2px solid var(--color-feeding)';
+      rightBtn.style.outline = '';
+    },
+  }, h('span', { class: 'breast-btn-emoji' }, '◀️'), 'Left');
+
+  const rightBtn = h('button', {
+    class: `breast-btn${selectedSide === 'breast_right' ? ' active' : ''}`,
+    style: selectedSide === 'breast_right' ? 'outline: 2px solid var(--color-feeding)' : '',
+    onClick: () => {
+      selectedSide = 'breast_right';
+      rightBtn.style.outline = '2px solid var(--color-feeding)';
+      leftBtn.style.outline = '';
+    },
+  }, h('span', { class: 'breast-btn-emoji' }, '▶️'), 'Right');
+
+  const startInput = h('input', {
+    class: 'form-input', type: 'datetime-local', value: isoToLocalInput(feeding.start_time),
+  }) as HTMLInputElement;
+
+  const endInput = h('input', {
+    class: 'form-input', type: 'datetime-local',
+    value: feeding.end_time ? isoToLocalInput(feeding.end_time) : '',
+  }) as HTMLInputElement;
+
+  const saveBtn = h('button', {
+    class: 'btn btn-primary', style: 'flex: 1',
+    onClick: async () => {
+      saveBtn.disabled = true;
+      try {
+        await api.updateFeeding(feeding.id, {
+          feed_type: selectedSide,
+          start_time: localInputToISO(startInput.value),
+          end_time: endInput.value ? localInputToISO(endInput.value) : undefined,
+        });
+        showToast('Feed updated');
+        close();
+        onSave();
+      } catch (e: any) {
+        showToast(e.message ?? 'Failed to update', 'error');
+        saveBtn.disabled = false;
+      }
+    },
+  }, 'Save');
+
+  modal.appendChild(h('div', { class: 'modal-handle' }));
+  modal.appendChild(h('div', { class: 'modal-header' },
+    h('div', { class: 'modal-title' }, '✏️ Edit Feed'),
+    h('button', { class: 'modal-close', onClick: close }, '×'),
+  ));
+  modal.appendChild(h('div', { class: 'modal-body' },
+    h('div', { class: 'breast-options' }, leftBtn, rightBtn),
+    h('div', { class: 'form-group' }, h('label', { class: 'form-label' }, 'Start time'), startInput),
+    h('div', { class: 'form-group' }, h('label', { class: 'form-label' }, 'End time'), endInput),
+  ));
+  modal.appendChild(h('div', { class: 'modal-actions' }, saveBtn));
+
+  setTimeout(() => overlay.classList.add('open'), 10);
+  return overlay;
 }

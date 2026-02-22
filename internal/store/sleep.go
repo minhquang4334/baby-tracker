@@ -26,7 +26,7 @@ func (s *Store) CreateSleep(childID, startTime, notes string) (*model.SleepLog, 
 	// Auto-stop any active breast feeding session when sleep starts.
 	var stopped *StoppedFeeding
 	if activeFeeding, err := s.GetActiveFeeding(childID); err == nil {
-		updated, err := s.UpdateFeeding(activeFeeding.ID, nowHCMC(), activeFeeding.Notes, activeFeeding.QuantityML)
+		updated, err := s.UpdateFeeding(activeFeeding.ID, "", "", nowHCMC(), activeFeeding.Notes, activeFeeding.QuantityML)
 		if err == nil && updated.DurationMinutes != nil {
 			stopped = &StoppedFeeding{ID: updated.ID, FeedType: updated.FeedType, DurationMinutes: *updated.DurationMinutes}
 		}

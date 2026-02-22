@@ -3,7 +3,8 @@ import { api } from '../api';
 import { renderNav } from './nav';
 import { renderQuickAdd } from './quick-add';
 import { showToast } from './toast';
-import { renderBottleEditModal } from './feeding-modal';
+import { renderBottleEditModal, renderBreastFeedEditModal } from './feeding-modal';
+import { renderDiaperEditModal } from './diaper-modal';
 import { renderSleepEditModal } from './sleep-edit-modal';
 import { formatTime, formatDateFull, formatDuration, todayISO } from '../utils/date';
 import type { SleepLog, FeedingLog, DiaperLog } from '../types/models';
@@ -124,9 +125,12 @@ export function renderHistory(): HTMLElement {
           const detail = f.quantity_ml
             ? `${typeLabel[f.feed_type]} · ${f.quantity_ml}ml`
             : `${typeLabel[f.feed_type]}${f.duration_minutes ? ` · ${formatDuration(f.duration_minutes)}` : ''}`;
-          const onEdit = f.feed_type === 'bottle' ? () => {
-            document.getElementById('app')!.appendChild(renderBottleEditModal(f, renderTimeline));
-          } : null;
+          const onEdit = () => {
+            const modal = f.feed_type === 'bottle'
+              ? renderBottleEditModal(f, renderTimeline)
+              : renderBreastFeedEditModal(f, renderTimeline);
+            document.getElementById('app')!.appendChild(modal);
+          };
           const onDelete = confirmDelete('Delete this feeding log?', () => api.deleteFeeding(f.id), 'Feeding deleted');
           items.push({
             time: f.start_time,
@@ -139,10 +143,13 @@ export function renderHistory(): HTMLElement {
         const diaperLogs: DiaperLog[] = results[ri++];
         const dLabel: Record<string, string> = { wet: 'Wet 💧', dirty: 'Dirty 💩', mixed: 'Mixed 🔄' };
         for (const d of diaperLogs) {
+          const onEdit = () => {
+            document.getElementById('app')!.appendChild(renderDiaperEditModal(d, renderTimeline));
+          };
           const onDelete = confirmDelete('Delete this diaper log?', () => api.deleteDiaper(d.id), 'Diaper log deleted');
           items.push({
             time: d.changed_at,
-            el: timelineItem('diaper', '🚼', 'Diaper', dLabel[d.diaper_type] ?? d.diaper_type, d.changed_at, null, onDelete),
+            el: timelineItem('diaper', '🚼', 'Diaper', dLabel[d.diaper_type] ?? d.diaper_type, d.changed_at, onEdit, onDelete),
           });
         }
       }

@@ -82,7 +82,7 @@ func (h *Handler) UpdateFeeding(w http.ResponseWriter, r *http.Request) {
 		h.Error(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
-	log, err := h.Store.UpdateFeeding(id, req.EndTime, req.Notes, req.QuantityML)
+	log, err := h.Store.UpdateFeeding(id, req.FeedType, req.StartTime, req.EndTime, req.Notes, req.QuantityML)
 	if err != nil {
 		h.Error(w, http.StatusInternalServerError, err.Error())
 		return

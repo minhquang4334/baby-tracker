@@ -58,7 +58,7 @@ func (h *Handler) UpdateDiaper(w http.ResponseWriter, r *http.Request) {
 		h.Error(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
-	log, err := h.Store.UpdateDiaper(id, req.DiaperType, req.Notes)
+	log, err := h.Store.UpdateDiaper(id, req.DiaperType, req.ChangedAt, req.Notes)
 	if err != nil {
 		h.Error(w, http.StatusInternalServerError, err.Error())
 		return

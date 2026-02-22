@@ -49,8 +49,18 @@ func (s *Store) GetDiaperLogs(childID, date string) ([]*model.DiaperLog, error) 
 	return scanDiaperRows(rows)
 }
 
-func (s *Store) UpdateDiaper(id, diaperType, notes string) (*model.DiaperLog, error) {
-	_, err := s.db.Exec(`UPDATE diaper_logs SET diaper_type=?, notes=? WHERE id=?`, diaperType, notes, id)
+func (s *Store) UpdateDiaper(id, diaperType, changedAt, notes string) (*model.DiaperLog, error) {
+	existing, err := getDiaperByID(s, id)
+	if err != nil {
+		return nil, err
+	}
+	if changedAt == "" {
+		changedAt = existing.ChangedAt
+	}
+	_, err = s.db.Exec(
+		`UPDATE diaper_logs SET diaper_type=?, changed_at=?, notes=? WHERE id=?`,
+		diaperType, changedAt, notes, id,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("update diaper: %w", err)
 	}

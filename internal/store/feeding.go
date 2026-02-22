@@ -76,30 +76,47 @@ func (s *Store) GetActiveFeeding(childID string) (*model.FeedingLog, error) {
 	return scanFeedingRow(row)
 }
 
-func (s *Store) UpdateFeeding(id, endTime, notes string, quantityML *int) (*model.FeedingLog, error) {
+func (s *Store) UpdateFeeding(id, feedType, startTime, endTime, notes string, quantityML *int) (*model.FeedingLog, error) {
+	existing, err := getFeedingByID(s, id)
+	if err != nil {
+		return nil, err
+	}
+	if feedType == "" {
+		feedType = existing.FeedType
+	}
+	if startTime == "" {
+		startTime = existing.StartTime
+	}
+
+	// Use new endTime if provided; fall back to existing end_time for duration calc
+	effectiveEnd := endTime
+	if effectiveEnd == "" && existing.EndTime != nil {
+		effectiveEnd = *existing.EndTime
+	}
+
 	var durationMinutes *int
-	if endTime != "" {
-		var start string
-		if err := s.db.QueryRow(`SELECT start_time FROM feeding_logs WHERE id=?`, id).Scan(&start); err == nil {
-			st, e1 := time.Parse(time.RFC3339, start)
-			et, e2 := time.Parse(time.RFC3339, endTime)
-			if e1 == nil && e2 == nil {
-				d := int(et.Sub(st).Minutes())
-				durationMinutes = &d
-			}
+	if effectiveEnd != "" {
+		st, e1 := time.Parse(time.RFC3339, startTime)
+		et, e2 := time.Parse(time.RFC3339, effectiveEnd)
+		if e1 == nil && e2 == nil {
+			d := int(et.Sub(st).Minutes())
+			durationMinutes = &d
 		}
-		_, err := s.db.Exec(
-			`UPDATE feeding_logs SET end_time=?, duration_minutes=?, quantity_ml=?, notes=? WHERE id=?`,
-			endTime, durationMinutes, quantityML, notes, id,
+	}
+
+	if effectiveEnd != "" {
+		_, err = s.db.Exec(
+			`UPDATE feeding_logs SET feed_type=?, start_time=?, end_time=?, duration_minutes=?, quantity_ml=?, notes=? WHERE id=?`,
+			feedType, startTime, effectiveEnd, durationMinutes, quantityML, notes, id,
 		)
-		if err != nil {
-			return nil, fmt.Errorf("update feeding: %w", err)
-		}
 	} else {
-		_, err := s.db.Exec(`UPDATE feeding_logs SET quantity_ml=?, notes=? WHERE id=?`, quantityML, notes, id)
-		if err != nil {
-			return nil, fmt.Errorf("update feeding: %w", err)
-		}
+		_, err = s.db.Exec(
+			`UPDATE feeding_logs SET feed_type=?, start_time=?, quantity_ml=?, notes=? WHERE id=?`,
+			feedType, startTime, quantityML, notes, id,
+		)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("update feeding: %w", err)
 	}
 	return getFeedingByID(s, id)
 }

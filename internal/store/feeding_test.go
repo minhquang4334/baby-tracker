@@ -144,7 +144,7 @@ func TestUpdateFeeding_StopsWithDuration(t *testing.T) {
 	childID := mustCreateChild(t, st)
 
 	f, _, _ := st.CreateFeeding(childID, "breast_left", feed1Start, "", nil)
-	updated, err := st.UpdateFeeding(f.ID, feed1End, "", nil)
+	updated, err := st.UpdateFeeding(f.ID, "", "", feed1End, "", nil)
 	if err != nil {
 		t.Fatalf("UpdateFeeding: %v", err)
 	}
@@ -164,7 +164,7 @@ func TestUpdateFeeding_QuantityOnly(t *testing.T) {
 	childID := mustCreateChild(t, st)
 
 	f, _, _ := st.CreateFeeding(childID, "bottle", feed1Start, "", intPtr(60))
-	updated, err := st.UpdateFeeding(f.ID, "", "", intPtr(150))
+	updated, err := st.UpdateFeeding(f.ID, "", "", "", "", intPtr(150))
 	if err != nil {
 		t.Fatalf("UpdateFeeding: %v", err)
 	}

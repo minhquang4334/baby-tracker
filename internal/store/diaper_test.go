@@ -93,7 +93,7 @@ func TestUpdateDiaper(t *testing.T) {
 	childID := mustCreateChild(t, st)
 
 	d, _ := st.CreateDiaper(childID, "wet", diaper1Time, "")
-	updated, err := st.UpdateDiaper(d.ID, "mixed", "updated note")
+	updated, err := st.UpdateDiaper(d.ID, "mixed", "", "updated note")
 	if err != nil {
 		t.Fatalf("UpdateDiaper: %v", err)
 	}
