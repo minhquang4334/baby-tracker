@@ -17,8 +17,7 @@ func (h *Handler) GetAnalytics(w http.ResponseWriter, r *http.Request) {
 	from := r.URL.Query().Get("from")
 
 	// Default: last 7 days in GMT+7
-	loc := time.FixedZone("GMT+7", 7*60*60)
-	now := time.Now().In(loc)
+	now := time.Now().In(hcmcTZ)
 	if to == "" {
 		to = now.Format("2006-01-02")
 	}

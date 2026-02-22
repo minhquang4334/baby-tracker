@@ -78,6 +78,13 @@ export function renderHistory(): HTMLElement {
     nextBtn.disabled = currentDate >= todayISO();
   };
 
+  const confirmDelete = (msg: string, action: () => Promise<void>, successMsg: string) => async () => {
+    if (!confirm(msg)) return;
+    await action();
+    showToast(successMsg);
+    renderTimeline();
+  };
+
   const renderTimeline = async () => {
     timelineWrap.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--color-text-muted)">Loading...</div>';
 
@@ -102,12 +109,7 @@ export function renderHistory(): HTMLElement {
           const onEdit = () => {
             document.getElementById('app')!.appendChild(renderSleepEditModal(s, renderTimeline));
           };
-          const onDelete = async () => {
-            if (!confirm('Delete this sleep log?')) return;
-            await api.deleteSleep(s.id);
-            showToast('Sleep deleted');
-            renderTimeline();
-          };
+          const onDelete = confirmDelete('Delete this sleep log?', () => api.deleteSleep(s.id), 'Sleep deleted');
           items.push({
             time: s.start_time,
             el: timelineItem('sleep', '😴', 'Sleep', detail, s.start_time, onEdit, onDelete),
@@ -125,12 +127,7 @@ export function renderHistory(): HTMLElement {
           const onEdit = f.feed_type === 'bottle' ? () => {
             document.getElementById('app')!.appendChild(renderBottleEditModal(f, renderTimeline));
           } : null;
-          const onDelete = async () => {
-            if (!confirm('Delete this feeding log?')) return;
-            await api.deleteFeeding(f.id);
-            showToast('Feeding deleted');
-            renderTimeline();
-          };
+          const onDelete = confirmDelete('Delete this feeding log?', () => api.deleteFeeding(f.id), 'Feeding deleted');
           items.push({
             time: f.start_time,
             el: timelineItem('feeding', '🍼', 'Feeding', detail, f.start_time, onEdit, onDelete),
@@ -142,12 +139,7 @@ export function renderHistory(): HTMLElement {
         const diaperLogs: DiaperLog[] = results[ri++];
         const dLabel: Record<string, string> = { wet: 'Wet 💧', dirty: 'Dirty 💩', mixed: 'Mixed 🔄' };
         for (const d of diaperLogs) {
-          const onDelete = async () => {
-            if (!confirm('Delete this diaper log?')) return;
-            await api.deleteDiaper(d.id);
-            showToast('Diaper log deleted');
-            renderTimeline();
-          };
+          const onDelete = confirmDelete('Delete this diaper log?', () => api.deleteDiaper(d.id), 'Diaper log deleted');
           items.push({
             time: d.changed_at,
             el: timelineItem('diaper', '🚼', 'Diaper', dLabel[d.diaper_type] ?? d.diaper_type, d.changed_at, null, onDelete),

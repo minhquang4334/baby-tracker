@@ -96,3 +96,23 @@
   display: block;
   width: 100%;
 }
+
+.analytics-chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 0 6px 2px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-right: 8px;
+}

@@ -84,11 +84,6 @@ export function renderQuickAdd(onRefresh: () => void): HTMLElement {
     menu.appendChild(row);
   }
 
-  const wrap = document.createDocumentFragment();
-  wrap.appendChild(overlay);
-  wrap.appendChild(menu);
-  wrap.appendChild(fabBtn);
-
   const container = h('div', { class: 'fab-container' });
   container.appendChild(overlay);
   container.appendChild(menu);

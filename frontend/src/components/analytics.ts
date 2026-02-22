@@ -41,6 +41,7 @@ export function renderAnalyticsScreen(): HTMLElement {
   const sleepChartSection = h('div', { class: 'analytics-chart-section' });
   const feedChartSection = h('div', { class: 'analytics-chart-section' });
   const diaperChartSection = h('div', { class: 'analytics-chart-section' });
+  const bottleChartSection = h('div', { class: 'analytics-chart-section' });
 
   const render = () => {
     // Compute totals
@@ -76,12 +77,32 @@ export function renderAnalyticsScreen(): HTMLElement {
     feedChartSection.appendChild(h('div', { class: 'analytics-chart-card' }, feedCanvas));
     drawBarChart(feedCanvas, data.map(d => d.date), data.map(d => d.feeding_count), '#E8507A', '');
 
-    // Diaper chart
+    // Diaper chart (stacked wet + dirty)
     diaperChartSection.innerHTML = '';
     const diaperCanvas = h('canvas', { height: '160' }) as HTMLCanvasElement;
     diaperChartSection.appendChild(h('div', { class: 'analytics-chart-title' }, '🚼 Diaper changes per day'));
+    diaperChartSection.appendChild(
+      h('div', { class: 'analytics-chart-legend' },
+        h('span', { class: 'legend-dot', style: 'background:#60A5FA' }),
+        h('span', { class: 'legend-label' }, 'Wet'),
+        h('span', { class: 'legend-dot', style: 'background:#A78BFA' }),
+        h('span', { class: 'legend-label' }, 'Dirty'),
+      ),
+    );
     diaperChartSection.appendChild(h('div', { class: 'analytics-chart-card' }, diaperCanvas));
-    drawBarChart(diaperCanvas, data.map(d => d.date), data.map(d => d.diaper_count), '#4CAF50', '');
+    drawStackedBarChart(
+      diaperCanvas,
+      data.map(d => d.date),
+      data.map(d => d.wet_count),   '#60A5FA',
+      data.map(d => d.dirty_count), '#A78BFA',
+    );
+
+    // Bottle chart (ml per day)
+    bottleChartSection.innerHTML = '';
+    const bottleCanvas = h('canvas', { height: '160' }) as HTMLCanvasElement;
+    bottleChartSection.appendChild(h('div', { class: 'analytics-chart-title' }, '🍶 Bottle milk per day (ml)'));
+    bottleChartSection.appendChild(h('div', { class: 'analytics-chart-card' }, bottleCanvas));
+    drawBarChart(bottleCanvas, data.map(d => d.date), data.map(d => d.bottle_ml_total), '#F59E0B', 'ml');
   };
 
   const load = async () => {
@@ -89,6 +110,7 @@ export function renderAnalyticsScreen(): HTMLElement {
     sleepChartSection.innerHTML = '';
     feedChartSection.innerHTML = '';
     diaperChartSection.innerHTML = '';
+    bottleChartSection.innerHTML = '';
 
     const today = todayISO();
     const fromDate = new Date(today + 'T12:00:00+07:00');
@@ -109,6 +131,7 @@ export function renderAnalyticsScreen(): HTMLElement {
   screen.appendChild(sleepChartSection);
   screen.appendChild(feedChartSection);
   screen.appendChild(diaperChartSection);
+  screen.appendChild(bottleChartSection);
   screen.appendChild(renderNav());
 
   load();
@@ -123,8 +146,13 @@ function statCard(icon: string, value: string, label: string): HTMLElement {
   );
 }
 
-function drawBarChart(canvas: HTMLCanvasElement, labels: string[], values: number[], color: string, unit: string) {
-  // Size the canvas to device pixel ratio for crisp rendering
+interface ChartCtx {
+  ctx: CanvasRenderingContext2D;
+  padTop: number; padBottom: number; padLeft: number; padRight: number;
+  chartW: number; chartH: number;
+}
+
+function setupChart(canvas: HTMLCanvasElement, maxVal: number, n: number): (ChartCtx & { barW: number; gap: number }) | null {
   const dpr = window.devicePixelRatio || 1;
   const cssW = canvas.parentElement?.clientWidth ?? 300;
   const cssH = parseInt(canvas.getAttribute('height') ?? '160');
@@ -134,18 +162,12 @@ function drawBarChart(canvas: HTMLCanvasElement, labels: string[], values: numbe
   canvas.height = cssH * dpr;
 
   const ctx = canvas.getContext('2d');
-  if (!ctx) return;
+  if (!ctx) return null;
   ctx.scale(dpr, dpr);
 
-  const padTop = 20;
-  const padBottom = 28;
-  const padLeft = 36;
-  const padRight = 8;
+  const padTop = 20, padBottom = 28, padLeft = 36, padRight = 8;
   const chartW = cssW - padLeft - padRight;
   const chartH = cssH - padTop - padBottom;
-
-  const maxVal = Math.max(...values, 1);
-  const n = values.length;
   const barW = Math.max(4, Math.floor((chartW / n) * 0.6));
   const gap = (chartW - barW * n) / (n + 1);
 
@@ -154,55 +176,102 @@ function drawBarChart(canvas: HTMLCanvasElement, labels: string[], values: numbe
   ctx.lineWidth = 1;
   for (let i = 0; i <= 4; i++) {
     const y = padTop + (chartH / 4) * i;
-    ctx.beginPath();
-    ctx.moveTo(padLeft, y);
-    ctx.lineTo(padLeft + chartW, y);
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(padLeft, y); ctx.lineTo(padLeft + chartW, y); ctx.stroke();
   }
 
   // Y axis labels
   ctx.fillStyle = 'rgba(0,0,0,0.35)';
-  ctx.font = `${10 * dpr / dpr}px sans-serif`;
+  ctx.font = '10px sans-serif';
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
   for (let i = 0; i <= 2; i++) {
     const val = maxVal * (1 - i / 2);
-    const y = padTop + (chartH / 2) * i;
-    ctx.fillText(val % 1 === 0 ? String(Math.round(val)) : val.toFixed(1), padLeft - 4, y);
+    ctx.fillText(val % 1 === 0 ? String(Math.round(val)) : val.toFixed(1), padLeft - 4, padTop + (chartH / 2) * i);
   }
 
-  // Bars + X labels
+  return { ctx, padTop, padBottom, padLeft, padRight, chartW, chartH, barW, gap };
+}
+
+function drawXLabel(ctx: CanvasRenderingContext2D, label: string, x: number, barW: number, padTop: number, chartH: number, i: number, n: number) {
+  if (n <= 10 || i === 0 || i === n - 1 || i % Math.ceil(n / 7) === 0) {
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(label.slice(5), x + barW / 2, padTop + chartH + 6);
+  }
+}
+
+function drawBarChart(canvas: HTMLCanvasElement, labels: string[], values: number[], color: string, unit: string) {
+  const c = setupChart(canvas, Math.max(...values, 1), values.length);
+  if (!c) return;
+  const { ctx, padTop, chartH, barW, gap } = c;
+  const maxVal = Math.max(...values, 1);
+
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  for (let i = 0; i < n; i++) {
-    const x = padLeft + gap + i * (barW + gap);
+  for (let i = 0; i < values.length; i++) {
+    const x = c.padLeft + gap + i * (barW + gap);
     const barH = (values[i] / maxVal) * chartH;
-    const y = padTop + chartH - barH;
 
-    // Bar
     ctx.fillStyle = color;
     ctx.globalAlpha = 0.85;
-    const radius = 3;
-    roundRect(ctx, x, y, barW, barH, radius);
+    roundRect(ctx, x, padTop + chartH - barH, barW, barH, 3);
     ctx.fill();
     ctx.globalAlpha = 1;
 
-    // X label: show day/month for first, last, and every ~7th label
-    if (n <= 10 || i === 0 || i === n - 1 || i % Math.ceil(n / 7) === 0) {
-      const label = labels[i]?.slice(5) ?? ''; // MM-DD
-      ctx.fillStyle = 'rgba(0,0,0,0.35)';
-      ctx.font = '10px sans-serif';
-      ctx.fillText(label, x + barW / 2, padTop + chartH + 6);
-    }
+    drawXLabel(ctx, labels[i] ?? '', x, barW, padTop, chartH, i, values.length);
 
-    // Value on top of bar (only if bar is tall enough)
     if (barH > 18 && values[i] > 0) {
       ctx.fillStyle = '#fff';
       ctx.font = 'bold 9px sans-serif';
       ctx.textBaseline = 'middle';
-      ctx.fillText(`${values[i]}${unit}`, x + barW / 2, y + Math.min(barH / 2, 10));
+      ctx.fillText(`${values[i]}${unit}`, x + barW / 2, padTop + chartH - barH + Math.min(barH / 2, 10));
       ctx.textBaseline = 'top';
     }
+  }
+}
+
+function drawStackedBarChart(
+  canvas: HTMLCanvasElement,
+  labels: string[],
+  bottomValues: number[], bottomColor: string,
+  topValues: number[],    topColor: string,
+) {
+  const totals = bottomValues.map((b, i) => b + topValues[i]);
+  const c = setupChart(canvas, Math.max(...totals, 1), labels.length);
+  if (!c) return;
+  const { ctx, padTop, chartH, barW, gap } = c;
+  const maxVal = Math.max(...totals, 1);
+
+  for (let i = 0; i < labels.length; i++) {
+    const x = c.padLeft + gap + i * (barW + gap);
+    const bottomH = (bottomValues[i] / maxVal) * chartH;
+    const topH    = (topValues[i]    / maxVal) * chartH;
+
+    if (bottomH > 0) {
+      ctx.fillStyle = bottomColor;
+      ctx.globalAlpha = 0.85;
+      roundRect(ctx, x, padTop + chartH - bottomH, barW, bottomH, topH > 0 ? 0 : 3);
+      ctx.fill();
+    }
+    if (topH > 0) {
+      ctx.fillStyle = topColor;
+      ctx.globalAlpha = 0.85;
+      roundRect(ctx, x, padTop + chartH - bottomH - topH, barW, topH, 3);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    const totalH = bottomH + topH;
+    if (totalH > 18 && totals[i] > 0) {
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(totals[i]), x + barW / 2, padTop + chartH - totalH / 2);
+    }
+
+    drawXLabel(ctx, labels[i] ?? '', x, barW, padTop, chartH, i, labels.length);
   }
 }
 
