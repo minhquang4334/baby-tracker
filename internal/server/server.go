@@ -52,6 +52,9 @@ func New(st *store.Store, staticFS fs.FS) http.Handler {
 	// Summary API
 	mux.HandleFunc("GET /api/v1/summary", h.GetSummary)
 
+	// Analytics API
+	mux.HandleFunc("GET /api/v1/analytics", h.GetAnalytics)
+
 	// Static file server with SPA fallback
 	static := http.FileServer(http.FS(staticFS))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

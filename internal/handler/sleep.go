@@ -89,7 +89,7 @@ func (h *Handler) UpdateSleep(w http.ResponseWriter, r *http.Request) {
 		h.Error(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
-	log, err := h.Store.UpdateSleep(id, req.EndTime, req.Notes)
+	log, err := h.Store.UpdateSleep(id, req.StartTime, req.EndTime, req.Notes)
 	if err != nil {
 		h.Error(w, http.StatusInternalServerError, err.Error())
 		return

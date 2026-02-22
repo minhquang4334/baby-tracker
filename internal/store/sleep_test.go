@@ -116,7 +116,7 @@ func TestUpdateSleep_StopsWithDuration(t *testing.T) {
 	childID := mustCreateChild(t, st)
 
 	sl, _, _ := st.CreateSleep(childID, sleep1Start, "")
-	updated, err := st.UpdateSleep(sl.ID, sleep1End, "updated notes")
+	updated, err := st.UpdateSleep(sl.ID, "", sleep1End, "updated notes")
 	if err != nil {
 		t.Fatalf("UpdateSleep: %v", err)
 	}
@@ -139,7 +139,7 @@ func TestUpdateSleep_NotesOnly(t *testing.T) {
 	childID := mustCreateChild(t, st)
 
 	sl, _, _ := st.CreateSleep(childID, sleep1Start, "original")
-	updated, err := st.UpdateSleep(sl.ID, "", "changed")
+	updated, err := st.UpdateSleep(sl.ID, "", "", "changed")
 	if err != nil {
 		t.Fatalf("UpdateSleep: %v", err)
 	}

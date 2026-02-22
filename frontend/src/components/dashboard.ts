@@ -3,6 +3,10 @@ import { api } from '../api';
 import { state } from '../state';
 import { renderNav } from './nav';
 import { renderQuickAdd } from './quick-add';
+import { renderSleepModal } from './sleep-modal';
+import { renderFeedingModal } from './feeding-modal';
+import { renderDiaperModal } from './diaper-modal';
+import { renderGrowthModal } from './growth-modal';
 import { showToast } from './toast';
 import { calcAge, formatDuration, timeAgo, formatTime, formatElapsed, elapsedSeconds, nowISO, todayISO } from '../utils/date';
 import type { DaySummary } from '../types/models';
@@ -103,23 +107,39 @@ export function renderDashboard(): HTMLElement {
         ? `${(s.last_weight_grams / 1000).toFixed(2)} kg`
         : '—';
 
+      const openModal = (renderFn: (refresh: () => void) => HTMLElement) => {
+        document.getElementById('app')!.appendChild(renderFn(refresh));
+      };
+
       screen.appendChild(h('div', { class: 'summary-grid' },
-        h('div', { class: 'summary-card summary-card-sleep' },
+        h('button', {
+          class: 'summary-card summary-card-sleep',
+          onClick: () => openModal(renderSleepModal),
+        },
           h('div', { class: 'summary-card-icon' }, '😴'),
           h('div', { class: 'summary-card-value' }, formatDuration(s.total_sleep_minutes) || '0m'),
           h('div', { class: 'summary-card-label' }, `Sleep · ${s.sleep_count} sessions`),
         ),
-        h('div', { class: 'summary-card summary-card-feeding' },
+        h('button', {
+          class: 'summary-card summary-card-feeding',
+          onClick: () => openModal(renderFeedingModal),
+        },
           h('div', { class: 'summary-card-icon' }, '🍼'),
           h('div', { class: 'summary-card-value' }, String(s.feeding_count)),
           h('div', { class: 'summary-card-label' }, 'Feedings today'),
         ),
-        h('div', { class: 'summary-card summary-card-diaper' },
+        h('button', {
+          class: 'summary-card summary-card-diaper',
+          onClick: () => openModal(renderDiaperModal),
+        },
           h('div', { class: 'summary-card-icon' }, '🚼'),
           h('div', { class: 'summary-card-value' }, String(s.diaper_count)),
           h('div', { class: 'summary-card-label' }, 'Diaper changes'),
         ),
-        h('div', { class: 'summary-card summary-card-growth' },
+        h('button', {
+          class: 'summary-card summary-card-growth',
+          onClick: () => openModal(renderGrowthModal),
+        },
           h('div', { class: 'summary-card-icon' }, '📏'),
           h('div', { class: 'summary-card-value', style: 'font-size: 18px' }, weightStr),
           h('div', { class: 'summary-card-label' }, 'Last weight'),

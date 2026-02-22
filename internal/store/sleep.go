@@ -74,32 +74,51 @@ func (s *Store) GetActiveSleep(childID string) (*model.SleepLog, error) {
 	return scanSleepRow(row)
 }
 
-func (s *Store) UpdateSleep(id, endTime, notes string) (*model.SleepLog, error) {
+func (s *Store) UpdateSleep(id, startTime, endTime, notes string) (*model.SleepLog, error) {
+	existing, err := getSleepByID(s, id)
+	if err != nil {
+		return nil, err
+	}
+
+	effectiveStart := existing.StartTime
+	if startTime != "" {
+		effectiveStart = startTime
+	}
+
 	var durationMinutes *int
-	if endTime != "" {
-		start, err := getSleepStartTime(s, id)
-		if err == nil {
-			st, e1 := time.Parse(time.RFC3339, start)
-			et, e2 := time.Parse(time.RFC3339, endTime)
-			if e1 == nil && e2 == nil {
-				d := int(et.Sub(st).Minutes())
-				durationMinutes = &d
-			}
+	if existing.EndTime != nil && *existing.EndTime != "" {
+		effectiveEnd := *existing.EndTime
+		if endTime != "" {
+			effectiveEnd = endTime
+		}
+		st, e1 := time.Parse(time.RFC3339, effectiveStart)
+		et, e2 := time.Parse(time.RFC3339, effectiveEnd)
+		if e1 == nil && e2 == nil {
+			d := int(et.Sub(st).Minutes())
+			durationMinutes = &d
+		}
+	} else if endTime != "" {
+		st, e1 := time.Parse(time.RFC3339, effectiveStart)
+		et, e2 := time.Parse(time.RFC3339, endTime)
+		if e1 == nil && e2 == nil {
+			d := int(et.Sub(st).Minutes())
+			durationMinutes = &d
 		}
 	}
+
 	if endTime != "" {
-		_, err := s.db.Exec(
-			`UPDATE sleep_logs SET end_time=?, duration_minutes=?, notes=? WHERE id=?`,
-			endTime, durationMinutes, notes, id,
+		_, err = s.db.Exec(
+			`UPDATE sleep_logs SET start_time=?, end_time=?, duration_minutes=?, notes=? WHERE id=?`,
+			effectiveStart, endTime, durationMinutes, notes, id,
 		)
-		if err != nil {
-			return nil, fmt.Errorf("update sleep: %w", err)
-		}
 	} else {
-		_, err := s.db.Exec(`UPDATE sleep_logs SET notes=? WHERE id=?`, notes, id)
-		if err != nil {
-			return nil, fmt.Errorf("update sleep: %w", err)
-		}
+		_, err = s.db.Exec(
+			`UPDATE sleep_logs SET start_time=?, duration_minutes=?, notes=? WHERE id=?`,
+			effectiveStart, durationMinutes, notes, id,
+		)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("update sleep: %w", err)
 	}
 	return getSleepByID(s, id)
 }
@@ -107,12 +126,6 @@ func (s *Store) UpdateSleep(id, endTime, notes string) (*model.SleepLog, error) 
 func (s *Store) DeleteSleep(id string) error {
 	_, err := s.db.Exec(`DELETE FROM sleep_logs WHERE id=?`, id)
 	return err
-}
-
-func getSleepStartTime(s *Store, id string) (string, error) {
-	var start string
-	err := s.db.QueryRow(`SELECT start_time FROM sleep_logs WHERE id=?`, id).Scan(&start)
-	return start, err
 }
 
 func getSleepByID(s *Store, id string) (*model.SleepLog, error) {

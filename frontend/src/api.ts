@@ -1,4 +1,4 @@
-import type { Child, SleepLog, FeedingLog, DiaperLog, GrowthLog, DaySummary } from './types/models';
+import type { Child, SleepLog, FeedingLog, DiaperLog, GrowthLog, DaySummary, DayStats } from './types/models';
 
 const BASE = '/api/v1';
 
@@ -48,4 +48,7 @@ export const api = {
 
   // Summary
   getSummary: (date?: string) => req<DaySummary>('GET', `/summary${date ? `?date=${date}` : ''}`),
+
+  // Analytics
+  getAnalytics: (from: string, to: string) => req<DayStats[]>('GET', `/analytics?from=${from}&to=${to}`),
 };

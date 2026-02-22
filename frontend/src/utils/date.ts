@@ -81,3 +81,9 @@ export function localInputToISO(value: string): string {
 export function nowForInput(): string {
   return toHCMC(new Date()).toISOString().slice(0, 16);
 }
+
+/** Convert an RFC3339 +07:00 timestamp to datetime-local input value (YYYY-MM-DDTHH:MM) in GMT+7. */
+export function isoToLocalInput(iso: string): string {
+  // Parse and shift to GMT+7 wall-clock time
+  return toHCMC(new Date(iso)).toISOString().slice(0, 16);
+}

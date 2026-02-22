@@ -4,6 +4,7 @@ import { renderNav } from './nav';
 import { renderQuickAdd } from './quick-add';
 import { showToast } from './toast';
 import { renderBottleEditModal } from './feeding-modal';
+import { renderSleepEditModal } from './sleep-edit-modal';
 import { formatTime, formatDateFull, formatDuration, todayISO } from '../utils/date';
 import type { SleepLog, FeedingLog, DiaperLog } from '../types/models';
 
@@ -98,6 +99,9 @@ export function renderHistory(): HTMLElement {
           const detail = s.end_time
             ? `${formatTime(s.start_time)} → ${formatTime(s.end_time)}${s.duration_minutes ? ` · ${formatDuration(s.duration_minutes)}` : ''}`
             : `${formatTime(s.start_time)} — in progress`;
+          const onEdit = () => {
+            document.getElementById('app')!.appendChild(renderSleepEditModal(s, renderTimeline));
+          };
           const onDelete = async () => {
             if (!confirm('Delete this sleep log?')) return;
             await api.deleteSleep(s.id);
@@ -106,7 +110,7 @@ export function renderHistory(): HTMLElement {
           };
           items.push({
             time: s.start_time,
-            el: timelineItem('sleep', '😴', 'Sleep', detail, s.start_time, null, onDelete),
+            el: timelineItem('sleep', '😴', 'Sleep', detail, s.start_time, onEdit, onDelete),
           });
         }
       }

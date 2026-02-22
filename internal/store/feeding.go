@@ -26,7 +26,7 @@ func (s *Store) CreateFeeding(childID, feedType, startTime, notes string, quanti
 	var stopped *StoppedSleep
 	if feedType == "breast_left" || feedType == "breast_right" {
 		if activeSleep, err := s.GetActiveSleep(childID); err == nil {
-			updated, err := s.UpdateSleep(activeSleep.ID, nowHCMC(), activeSleep.Notes)
+			updated, err := s.UpdateSleep(activeSleep.ID, "", nowHCMC(), activeSleep.Notes)
 			if err == nil && updated.DurationMinutes != nil {
 				stopped = &StoppedSleep{ID: updated.ID, DurationMinutes: *updated.DurationMinutes}
 			}

@@ -60,6 +60,16 @@
   border-radius: var(--radius-md);
   padding: 16px;
   box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+  text-align: left;
+  width: 100%;
+  border: none;
+}
+
+.summary-card:active {
+  transform: scale(0.96);
+  box-shadow: none;
 }
 
 .summary-card-icon {

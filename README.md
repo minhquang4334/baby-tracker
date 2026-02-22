@@ -297,9 +297,15 @@ The app ships as a Docker container. Railway builds the image from the `Dockerfi
 
 1. Create a new Railway project → **Deploy from GitHub repo** → select your repo
 2. Railway detects the `Dockerfile` and starts the first build automatically
-3. **Add a persistent volume** so the SQLite database survives redeploys:
-   - Service → **Volumes** → Add Volume → Mount Path: `/data`
-4. The app reads `$PORT` automatically (set by Railway) — no extra config needed
+3. **⚠️ CRITICAL — Add a persistent volume before using the app:**
+   - Service → **Volumes** tab → **Add Volume**
+   - Set **Mount Path** to `/data`
+   - Click **Add**
+   - Redeploy the service (or wait for the next push)
+
+   > The SQLite database is stored at `/data/baby-care.db`. Without a mounted volume, the file lives inside the container and is **wiped on every deploy**. The Railway volume survives all future deploys and restarts automatically.
+
+4. The app reads `$PORT` automatically (set by Railway) — no extra env vars needed
 
 ### CI/CD (GitHub Actions)
 

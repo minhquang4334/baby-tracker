@@ -5,6 +5,7 @@ import '../css/dashboard.css';
 import '../css/modal.css';
 import '../css/history.css';
 import '../css/growth-chart.css';
+import '../css/analytics.css';
 
 import { addRoute, initRouter, navigate } from './router';
 import { api } from './api';
@@ -14,11 +15,13 @@ import { renderDashboard } from './components/dashboard';
 import { renderHistory } from './components/history';
 import { renderGrowthScreen } from './components/growth-chart';
 import { renderGuideScreen } from './components/guide';
+import { renderAnalyticsScreen } from './components/analytics';
 
 // Register routes
 addRoute('/onboarding', renderOnboarding);
 addRoute('/dashboard', renderDashboard);
 addRoute('/history', renderHistory);
+addRoute('/analytics', renderAnalyticsScreen);
 addRoute('/growth', renderGrowthScreen);
 addRoute('/guide', renderGuideScreen);
 

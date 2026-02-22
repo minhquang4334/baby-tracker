@@ -74,22 +74,26 @@ export function renderSleepModal(onSave: () => void): HTMLElement {
     modal.appendChild(h('div', { class: 'modal-actions', style: 'flex-direction: column' }, stopBtn, deleteBtn));
   } else {
     // Manual entry or quick start
-    body.appendChild(h('p', { style: 'color: var(--color-text-secondary); font-size: 14px; margin-bottom: 16px' },
-      'Tap "Start Sleep" to begin timing, or enter times manually.',
-    ));
-
     const startInput = h('input', {
       class: 'form-input',
       type: 'datetime-local',
       id: 'sleep-start',
     }) as HTMLInputElement;
-
-    // Set default to now in GMT+7
     startInput.value = nowForInput();
 
+    const endInput = h('input', {
+      class: 'form-input',
+      type: 'datetime-local',
+      id: 'sleep-end',
+    }) as HTMLInputElement;
+
     body.appendChild(h('div', { class: 'form-group' },
-      h('label', { class: 'form-label', for: 'sleep-start' }, 'Start time (optional)'),
+      h('label', { class: 'form-label', for: 'sleep-start' }, 'Start time'),
       startInput,
+    ));
+    body.appendChild(h('div', { class: 'form-group' },
+      h('label', { class: 'form-label', for: 'sleep-end' }, 'End time (leave blank to start timer)'),
+      endInput,
     ));
 
     const startBtn = h('button', {
@@ -98,24 +102,46 @@ export function renderSleepModal(onSave: () => void): HTMLElement {
         startBtn.disabled = true;
         startBtn.innerHTML = '<div class="spinner"></div>';
         try {
-          const res = await api.createSleep({ start_time: localInputToISO(startInput.value) });
-          state.activeSleep.set(res);
-          state.activeFeeding.set(null);
-          if (res.stopped_feeding) {
-            const side = res.stopped_feeding.feed_type === 'breast_left' ? 'Left' : 'Right';
-            showToast(`${side} feed stopped (${res.stopped_feeding.duration_minutes}m) — sleep started`);
+          const startISO = localInputToISO(startInput.value);
+          const endISO = endInput.value ? localInputToISO(endInput.value) : '';
+
+          if (endISO) {
+            // Log a completed sleep: create then immediately stop it
+            const res = await api.createSleep({ start_time: startISO });
+            await api.updateSleep(res.id, { end_time: endISO });
+            state.activeFeeding.set(null);
+            if (res.stopped_feeding) {
+              const side = res.stopped_feeding.feed_type === 'breast_left' ? 'Left' : 'Right';
+              showToast(`${side} feed stopped — sleep logged`);
+            } else {
+              showToast('Sleep logged');
+            }
           } else {
-            showToast('Sleep started');
+            // Start a live timer
+            const res = await api.createSleep({ start_time: startISO });
+            state.activeSleep.set(res);
+            state.activeFeeding.set(null);
+            if (res.stopped_feeding) {
+              const side = res.stopped_feeding.feed_type === 'breast_left' ? 'Left' : 'Right';
+              showToast(`${side} feed stopped (${res.stopped_feeding.duration_minutes}m) — sleep started`);
+            } else {
+              showToast('Sleep started');
+            }
           }
           onSave();
           close();
         } catch (e: any) {
           showToast(e.message, 'error');
           startBtn.disabled = false;
-          startBtn.textContent = 'Start Sleep';
+          startBtn.textContent = endInput.value ? 'Log Sleep' : 'Start Sleep';
         }
       },
     }, 'Start Sleep');
+
+    // Update button label dynamically based on whether end time is filled
+    endInput.addEventListener('input', () => {
+      startBtn.textContent = endInput.value ? 'Log Sleep' : 'Start Sleep';
+    });
 
     modal.appendChild(h('div', { class: 'modal-actions' }, startBtn));
   }

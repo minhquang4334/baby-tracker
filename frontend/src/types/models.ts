@@ -51,6 +51,19 @@ export interface GrowthLog {
   created_at: string;
 }
 
+export interface DayStats {
+  date: string;
+  sleep_minutes: number;
+  sleep_count: number;
+  feeding_count: number;
+  breast_feed_count: number;
+  bottle_feed_count: number;
+  bottle_ml_total: number;
+  diaper_count: number;
+  wet_count: number;
+  dirty_count: number;
+}
+
 export interface DaySummary {
   date: string;
   total_sleep_minutes: number;

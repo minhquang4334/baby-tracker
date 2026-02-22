@@ -33,9 +33,9 @@ func TestGetDaySummary_Counts(t *testing.T) {
 
 	// 2 completed sleeps on this date
 	sl1, _, _ := st.CreateSleep(childID, "2024-01-15T08:00:00+07:00", "")
-	st.UpdateSleep(sl1.ID, "2024-01-15T09:30:00+07:00", "") // 90 min
+	st.UpdateSleep(sl1.ID, "", "2024-01-15T09:30:00+07:00", "") // 90 min
 	sl2, _, _ := st.CreateSleep(childID, "2024-01-15T13:00:00+07:00", "")
-	st.UpdateSleep(sl2.ID, "2024-01-15T14:00:00+07:00", "") // 60 min
+	st.UpdateSleep(sl2.ID, "", "2024-01-15T14:00:00+07:00", "") // 60 min
 
 	// 3 feedings
 	st.CreateFeeding(childID, "bottle", "2024-01-15T07:00:00+07:00", "", intPtr(90))
@@ -69,7 +69,7 @@ func TestGetDaySummary_ExcludesOtherDates(t *testing.T) {
 	childID := mustCreateChild(t, st)
 
 	sl, _, _ := st.CreateSleep(childID, "2024-01-14T22:00:00+07:00", "")
-	st.UpdateSleep(sl.ID, "2024-01-14T23:00:00+07:00", "")
+	st.UpdateSleep(sl.ID, "", "2024-01-14T23:00:00+07:00", "")
 	st.CreateFeeding(childID, "bottle", "2024-01-14T20:00:00+07:00", "", intPtr(60))
 	st.CreateDiaper(childID, "wet", "2024-01-14T19:00:00+07:00", "")
 
