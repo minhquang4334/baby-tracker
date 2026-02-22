@@ -1,0 +1,64 @@
+.onboarding {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 0 24px;
+  background: linear-gradient(160deg, #FEF0F5 0%, var(--color-bg) 60%);
+}
+
+.onboarding-header {
+  padding-top: 60px;
+  padding-bottom: 40px;
+  text-align: center;
+}
+
+.onboarding-emoji {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.onboarding-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+.onboarding-subtitle {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.onboarding-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.gender-pills {
+  display: flex;
+  gap: 8px;
+}
+
+.gender-pill {
+  flex: 1;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  border: 1.5px solid var(--color-border);
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  transition: all 0.15s;
+}
+
+.gender-pill.selected {
+  border-color: var(--color-primary);
+  background: #FDE8F1;
+  color: var(--color-primary);
+}
+
+.onboarding-footer {
+  padding: 24px 0 48px;
+}

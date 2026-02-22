@@ -1,0 +1,13 @@
+{
+  "name": "baby-care-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "esbuild src/main.ts --bundle --outfile=../static/app.js --minify",
+    "watch": "esbuild src/main.ts --bundle --outfile=../static/app.js --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.0"
+  }
+}

@@ -1,0 +1,217 @@
+.growth-screen {
+  padding-bottom: calc(var(--nav-height) + 80px);
+}
+
+.chart-toggle {
+  display: flex;
+  gap: 8px;
+  padding: 16px 16px 8px;
+}
+
+.chart-wrap {
+  margin: 0 16px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: 16px 8px;
+  box-shadow: var(--shadow-sm);
+}
+
+.chart-canvas {
+  width: 100%;
+  display: block;
+}
+
+.growth-table {
+  margin: 16px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.growth-table-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  padding: 10px 16px;
+  background: var(--color-border);
+}
+
+.growth-table-header span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.growth-table-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  padding: 12px 16px;
+  border-top: 1px solid var(--color-border);
+  align-items: center;
+}
+
+.growth-table-row span {
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.growth-table-row span:first-child {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+/* ── Guide Screen ────────────────────────────────────────────────── */
+.guide-screen {
+  padding-bottom: calc(var(--nav-height) + 24px);
+}
+
+.guide-title {
+  padding: 16px 20px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* ── Reference Guide ─────────────────────────────────────────────── */
+.ref-guide {
+  margin: 8px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ref-section {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.ref-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+  padding: 12px 14px 10px;
+  background: var(--color-growth-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ref-sub-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  padding: 8px 14px 4px;
+}
+
+/* Reference table */
+.ref-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ref-table-row {
+  display: flex;
+  min-width: max-content;
+  width: 100%;
+}
+
+.ref-table-row span {
+  flex: 1;
+  min-width: 60px;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.ref-table-row span:first-child {
+  min-width: 72px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  position: sticky;
+  left: 0;
+  background: inherit;
+  z-index: 1;
+}
+
+.ref-table-head {
+  background: var(--color-border);
+}
+
+.ref-table-head span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.ref-table-head span:first-child {
+  background: var(--color-border);
+}
+
+.ref-table-row-alt {
+  background: #FAFAFA;
+}
+
+.ref-table-row-alt span:first-child {
+  background: #FAFAFA;
+}
+
+.ref-cell-hi {
+  color: var(--color-growth) !important;
+  font-weight: 600 !important;
+}
+
+/* Note / disclaimer */
+.ref-note {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  padding: 8px 14px 12px;
+  line-height: 1.5;
+}
+
+/* Warning list */
+.ref-warn-list {
+  margin: 0;
+  padding: 8px 14px 12px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ref-warn-list li {
+  font-size: 13px;
+  color: var(--color-text);
+  line-height: 1.45;
+}
+
+/* Source list */
+.ref-src-list {
+  margin: 0;
+  padding: 8px 14px 12px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ref-src-list li {
+  font-size: 12px;
+}
+
+.ref-src-list a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Disclaimer footer */
+.ref-disclaimer {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: 4px 16px 8px;
+  line-height: 1.5;
+  font-style: italic;
+}

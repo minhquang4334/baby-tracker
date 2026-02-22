@@ -1,0 +1,26 @@
+# Build artifacts
+baby-care
+static/app.js
+static/app.css
+
+# Node modules (rebuilt in Docker)
+frontend/node_modules/
+node_modules/
+
+# Go build cache
+vendor/
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+
+# Dev/editor files
+.claude/
+.git/
+.gitignore
+*.md
+PLAN.md
+
+# CI files (not needed in image)
+.github/
