@@ -212,19 +212,18 @@ function timelineItem(
     }, '🗑️'));
   }
 
-  const right = h('div', { class: 'timeline-right' });
-  if (showTime) right.appendChild(h('span', { class: 'timeline-time' }, formatTime(time)));
-  right.appendChild(actions);
-
   return h('div', { class: 'timeline-item' },
     h('div', { class: `timeline-dot timeline-dot-${category}` }, emoji),
     h('div', { class: 'timeline-content' },
-      h('div', { class: 'timeline-text' },
-        h('span', { class: 'timeline-title' }, title),
-        h('span', { class: 'timeline-sep' }, ' · '),
-        h('span', { class: 'timeline-detail' }, detail),
+      h('div', { class: 'timeline-top' },
+        h('div', { class: 'timeline-text' },
+          h('span', { class: 'timeline-title' }, title),
+          h('span', { class: 'timeline-sep' }, ' · '),
+          h('span', { class: 'timeline-detail' }, detail),
+        ),
+        actions,
       ),
-      right,
+      ...(showTime ? [h('div', { class: 'timeline-time' }, formatTime(time))] : []),
     ),
   );
 }
