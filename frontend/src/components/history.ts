@@ -113,7 +113,7 @@ export function renderHistory(): HTMLElement {
           const onDelete = confirmDelete('Delete this sleep log?', () => api.deleteSleep(s.id), 'Sleep deleted');
           items.push({
             time: s.start_time,
-            el: timelineItem('sleep', '😴', 'Sleep', detail, s.start_time, onEdit, onDelete, false),
+            el: timelineItem('sleep', '😴', 'Sleep', detail, s.start_time, onEdit, onDelete),
           });
         }
       }
