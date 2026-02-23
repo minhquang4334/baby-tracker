@@ -173,8 +173,21 @@
   margin-top: 1px;
 }
 
+.activity-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
 .activity-time {
   font-size: 12px;
   color: var(--color-text-muted);
   white-space: nowrap;
+}
+
+.activity-actions {
+  display: flex;
+  gap: 4px;
 }

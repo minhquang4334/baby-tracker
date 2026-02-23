@@ -4,8 +4,9 @@ import { state } from '../state';
 import { renderNav } from './nav';
 import { renderQuickAdd } from './quick-add';
 import { renderSleepModal } from './sleep-modal';
-import { renderFeedingModal } from './feeding-modal';
-import { renderDiaperModal } from './diaper-modal';
+import { renderSleepEditModal } from './sleep-edit-modal';
+import { renderFeedingModal, renderBottleEditModal, renderBreastFeedEditModal } from './feeding-modal';
+import { renderDiaperModal, renderDiaperEditModal } from './diaper-modal';
 import { renderGrowthModal } from './growth-modal';
 import { showToast } from './toast';
 import { calcAge, formatDuration, timeAgo, formatTime, formatElapsed, elapsedSeconds, nowISO, todayISO } from '../utils/date';
@@ -212,6 +213,14 @@ function renderTimerBanner(
 }
 
 async function loadRecentActivity(screen: HTMLElement, refresh: () => void): Promise<void> {
+  const app = () => document.getElementById('app')!;
+  const confirmDelete = (msg: string, action: () => Promise<void>, successMsg: string) => async () => {
+    if (!confirm(msg)) return;
+    await action();
+    showToast(successMsg);
+    refresh();
+  };
+
   try {
     const today = todayISO();
     const [sleep, feeding, diaper] = await Promise.all([
@@ -227,47 +236,37 @@ async function loadRecentActivity(screen: HTMLElement, refresh: () => void): Pro
       const detail = s.end_time
         ? `${formatTime(s.start_time)} → ${formatTime(s.end_time)} (${s.duration_minutes}m)`
         : `${formatTime(s.start_time)} — in progress`;
+      const onEdit = () => app().appendChild(renderSleepEditModal(s, refresh));
+      const onDelete = confirmDelete('Delete this sleep log?', () => api.deleteSleep(s.id), 'Sleep deleted');
       items.push({
         time: s.start_time,
-        el: h('div', { class: 'activity-item' },
-          h('div', { class: 'activity-dot activity-dot-sleep' }, '😴'),
-          h('div', { class: 'activity-info' },
-            h('div', { class: 'activity-title' }, 'Sleep'),
-            h('div', { class: 'activity-detail' }, detail),
-          ),
-          h('div', { class: 'activity-time' }, timeAgo(s.start_time)),
-        ),
+        el: activityItem('sleep', '😴', 'Sleep', detail, timeAgo(s.start_time), onEdit, onDelete),
       });
     }
 
     for (const f of feeding) {
       const typeLabel: Record<string, string> = { breast_left: '◀ Left', breast_right: '▶ Right', bottle: '🍼 Bottle' };
       const detail = f.quantity_ml ? `${f.quantity_ml}ml` : (f.duration_minutes ? `${f.duration_minutes}m` : 'In progress');
+      const onEdit = () => {
+        const modal = f.feed_type === 'bottle'
+          ? renderBottleEditModal(f, refresh)
+          : renderBreastFeedEditModal(f, refresh);
+        app().appendChild(modal);
+      };
+      const onDelete = confirmDelete('Delete this feeding log?', () => api.deleteFeeding(f.id), 'Feeding deleted');
       items.push({
         time: f.start_time,
-        el: h('div', { class: 'activity-item' },
-          h('div', { class: 'activity-dot activity-dot-feeding' }, '🍼'),
-          h('div', { class: 'activity-info' },
-            h('div', { class: 'activity-title' }, `Feed — ${typeLabel[f.feed_type] ?? f.feed_type}`),
-            h('div', { class: 'activity-detail' }, detail),
-          ),
-          h('div', { class: 'activity-time' }, timeAgo(f.start_time)),
-        ),
+        el: activityItem('feeding', '🍼', `Feed — ${typeLabel[f.feed_type] ?? f.feed_type}`, detail, timeAgo(f.start_time), onEdit, onDelete),
       });
     }
 
     for (const d of diaper) {
       const label: Record<string, string> = { wet: 'Wet 💧', dirty: 'Dirty 💩', mixed: 'Mixed 🔄' };
+      const onEdit = () => app().appendChild(renderDiaperEditModal(d, refresh));
+      const onDelete = confirmDelete('Delete this diaper log?', () => api.deleteDiaper(d.id), 'Diaper log deleted');
       items.push({
         time: d.changed_at,
-        el: h('div', { class: 'activity-item' },
-          h('div', { class: 'activity-dot activity-dot-diaper' }, '🚼'),
-          h('div', { class: 'activity-info' },
-            h('div', { class: 'activity-title' }, 'Diaper'),
-            h('div', { class: 'activity-detail' }, label[d.diaper_type] ?? d.diaper_type),
-          ),
-          h('div', { class: 'activity-time' }, timeAgo(d.changed_at)),
-        ),
+        el: activityItem('diaper', '🚼', 'Diaper', label[d.diaper_type] ?? d.diaper_type, timeAgo(d.changed_at), onEdit, onDelete),
       });
     }
 
@@ -291,4 +290,37 @@ async function loadRecentActivity(screen: HTMLElement, refresh: () => void): Pro
   } catch {
     // Silently fail for activity list
   }
+}
+
+function activityItem(
+  category: string,
+  emoji: string,
+  title: string,
+  detail: string,
+  ago: string,
+  onEdit: () => void,
+  onDelete: () => void,
+): HTMLElement {
+  const actions = h('div', { class: 'activity-actions' },
+    h('button', {
+      class: 'timeline-action-btn',
+      onClick: (e: Event) => { e.stopPropagation(); onEdit(); },
+    }, '✏️'),
+    h('button', {
+      class: 'timeline-action-btn timeline-action-delete',
+      onClick: (e: Event) => { e.stopPropagation(); onDelete(); },
+    }, '🗑️'),
+  );
+
+  return h('div', { class: 'activity-item' },
+    h('div', { class: `activity-dot activity-dot-${category}` }, emoji),
+    h('div', { class: 'activity-info' },
+      h('div', { class: 'activity-title' }, title),
+      h('div', { class: 'activity-detail' }, detail),
+    ),
+    h('div', { class: 'activity-right' },
+      h('div', { class: 'activity-time' }, ago),
+      actions,
+    ),
+  );
 }
