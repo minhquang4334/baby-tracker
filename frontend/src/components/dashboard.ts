@@ -80,24 +80,31 @@ export function renderDashboard(): HTMLElement {
         },
       );
       screen.appendChild(timerBanner);
-    } else if (activeFeeding) {
-      const label = activeFeeding.feed_type === 'breast_left' ? '◀️ Left Breast' : '▶️ Right Breast';
-      timerBanner = renderTimerBanner(
-        `🍼 ${label}`,
-        activeFeeding.start_time,
-        '#EC4899',
-        async () => {
-          try {
-            await api.updateFeeding(activeFeeding.id, { end_time: nowISO() });
-            state.activeFeeding.set(null);
-            showToast('Feed logged');
-            refresh();
-          } catch (e: any) {
-            showToast(e.message, 'error');
-          }
-        },
-      );
-      screen.appendChild(timerBanner);
+    } else {
+      // Baby is awake — show awake timer if we know when they last woke up
+      if (summaryData?.last_sleep_end_time) {
+        screen.appendChild(renderAwakeBanner(summaryData.last_sleep_end_time));
+      }
+
+      if (activeFeeding) {
+        const label = activeFeeding.feed_type === 'breast_left' ? '◀️ Left Breast' : '▶️ Right Breast';
+        timerBanner = renderTimerBanner(
+          `🍼 ${label}`,
+          activeFeeding.start_time,
+          '#EC4899',
+          async () => {
+            try {
+              await api.updateFeeding(activeFeeding.id, { end_time: nowISO() });
+              state.activeFeeding.set(null);
+              showToast('Feed logged');
+              refresh();
+            } catch (e: any) {
+              showToast(e.message, 'error');
+            }
+          },
+        );
+        screen.appendChild(timerBanner);
+      }
     }
 
     // Summary cards
@@ -157,6 +164,20 @@ export function renderDashboard(): HTMLElement {
 
   refresh();
   return screen;
+}
+
+function renderAwakeBanner(sinceISO: string): HTMLElement {
+  const timeEl = h('div', { class: 'timer-banner-time' }, formatElapsed(elapsedSeconds(sinceISO)));
+  setInterval(() => {
+    timeEl.textContent = formatElapsed(elapsedSeconds(sinceISO));
+  }, 1000);
+
+  return h('div', { class: 'timer-banner awake-banner', style: '--banner-color: #F59E0B' },
+    h('div', { class: 'timer-banner-info' },
+      h('div', { class: 'timer-banner-title' }, '☀️ Awake'),
+      timeEl,
+    ),
+  );
 }
 
 function renderTimerBanner(

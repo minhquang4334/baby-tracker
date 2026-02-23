@@ -71,6 +71,7 @@ export interface DaySummary {
   feeding_count: number;
   diaper_count: number;
   last_weight_grams?: number;
+  last_sleep_end_time?: string;
   active_sleep?: SleepLog;
   active_feeding?: FeedingLog;
 }
