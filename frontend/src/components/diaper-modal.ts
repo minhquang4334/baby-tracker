@@ -1,7 +1,7 @@
 import { h } from '../utils/dom';
 import { api } from '../api';
 import { showToast } from './toast';
-import { nowISO, isoToLocalInput, localInputToISO } from '../utils/date';
+import { nowISO, nowForInput, isoToLocalInput, localInputToISO } from '../utils/date';
 import type { DiaperLog } from '../types/models';
 
 type DiaperType = 'wet' | 'dirty' | 'mixed';
@@ -22,9 +22,14 @@ export function renderDiaperModal(onSave: () => void): HTMLElement {
     h('button', { class: 'modal-close', onClick: close }, '×'),
   ));
 
+  const timeInput = h('input', {
+    class: 'form-input', type: 'datetime-local', value: nowForInput(),
+  }) as HTMLInputElement;
+
   const logDiaper = async (type: DiaperType) => {
     try {
-      await api.createDiaper({ diaper_type: type, changed_at: nowISO() });
+      const changedAt = timeInput.value ? localInputToISO(timeInput.value) : nowISO();
+      await api.createDiaper({ diaper_type: type, changed_at: changedAt });
       const labels: Record<DiaperType, string> = { wet: 'Wet', dirty: 'Dirty', mixed: 'Mixed' };
       showToast(`${labels[type]} diaper logged`);
       onSave();
@@ -51,6 +56,9 @@ export function renderDiaperModal(onSave: () => void): HTMLElement {
     ));
   }
 
+  modal.appendChild(h('div', { class: 'modal-body' },
+    h('div', { class: 'form-group' }, h('label', { class: 'form-label' }, 'Time'), timeInput),
+  ));
   modal.appendChild(grid);
 
   setTimeout(() => overlay.classList.add('open'), 10);

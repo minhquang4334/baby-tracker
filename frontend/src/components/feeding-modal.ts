@@ -2,7 +2,7 @@ import { h } from '../utils/dom';
 import { api } from '../api';
 import { state } from '../state';
 import { showToast } from './toast';
-import { formatTime, formatElapsed, elapsedSeconds, nowISO, isoToLocalInput, localInputToISO } from '../utils/date';
+import { formatTime, formatElapsed, elapsedSeconds, nowISO, nowForInput, isoToLocalInput, localInputToISO } from '../utils/date';
 import type { FeedingLog } from '../types/models';
 
 type FeedTab = 'breast' | 'bottle';
@@ -167,12 +167,17 @@ export function renderBottleEditModal(feeding: FeedingLog, onSave: () => void): 
 function renderBreastSection(close: () => void, onSave: () => void): HTMLElement {
   const wrap = h('div', {});
 
+  const timeInput = h('input', {
+    class: 'form-input', type: 'datetime-local', value: nowForInput(),
+  }) as HTMLInputElement;
+
   const makeBreastBtn = (side: 'breast_left' | 'breast_right', emoji: string, label: string) =>
     h('button', {
       class: 'breast-btn',
       onClick: async () => {
         try {
-          const res = await api.createFeeding({ feed_type: side, start_time: nowISO() });
+          const startTime = timeInput.value ? localInputToISO(timeInput.value) : nowISO();
+          const res = await api.createFeeding({ feed_type: side, start_time: startTime });
           state.activeFeeding.set(res);
           state.activeSleep.set(null);
           if (res.stopped_sleep) {
@@ -195,6 +200,9 @@ function renderBreastSection(close: () => void, onSave: () => void): HTMLElement
     makeBreastBtn('breast_left', '◀️', 'Left'),
     makeBreastBtn('breast_right', '▶️', 'Right'),
   ));
+  wrap.appendChild(h('div', { class: 'modal-body' },
+    h('div', { class: 'form-group' }, h('label', { class: 'form-label' }, 'Start time'), timeInput),
+  ));
 
   return wrap;
 }
@@ -210,6 +218,10 @@ function renderBottleSection(close: () => void, onSave: () => void): HTMLElement
     max: '500',
     step: '5',
     placeholder: 'ml',
+  }) as HTMLInputElement;
+
+  const timeInput = h('input', {
+    class: 'form-input', type: 'datetime-local', value: nowForInput(),
   }) as HTMLInputElement;
 
   const presetRow = h('div', { class: 'ml-presets' });
@@ -228,7 +240,8 @@ function renderBottleSection(close: () => void, onSave: () => void): HTMLElement
       saveBtn.disabled = true;
       saveBtn.innerHTML = '<div class="spinner"></div>';
       try {
-        await api.createFeeding({ feed_type: 'bottle', start_time: nowISO(), quantity_ml: ml });
+        const startTime = timeInput.value ? localInputToISO(timeInput.value) : nowISO();
+        await api.createFeeding({ feed_type: 'bottle', start_time: startTime, quantity_ml: ml });
         state.lastBottleML.set(ml);
         showToast(`Bottle logged: ${ml}ml`);
         onSave();
@@ -247,6 +260,10 @@ function renderBottleSection(close: () => void, onSave: () => void): HTMLElement
       h('div', { class: 'form-group' },
         h('label', { class: 'form-label' }, 'Amount (ml)'),
         mlInput,
+      ),
+      h('div', { class: 'form-group' },
+        h('label', { class: 'form-label' }, 'Time'),
+        timeInput,
       ),
     ),
     h('div', { class: 'modal-actions' }, saveBtn),
