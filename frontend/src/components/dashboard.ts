@@ -15,8 +15,8 @@ export function renderDashboard(): HTMLElement {
   const screen = h('div', { class: 'screen dashboard' });
 
   let summaryData: DaySummary | null = null;
-  let timerInterval: ReturnType<typeof setInterval> | null = null;
   let timerBanner: HTMLElement | null = null;
+  const activeIntervals: ReturnType<typeof setInterval>[] = [];
 
   const refresh = async () => {
     try {
@@ -36,7 +36,8 @@ export function renderDashboard(): HTMLElement {
 
   const renderContent = () => {
     screen.innerHTML = '';
-    if (timerInterval) clearInterval(timerInterval);
+    activeIntervals.forEach(clearInterval);
+    activeIntervals.length = 0;
 
     const child = state.child.get();
     if (!child) return;
@@ -63,6 +64,8 @@ export function renderDashboard(): HTMLElement {
     const activeSleep = state.activeSleep.get();
     const activeFeeding = state.activeFeeding.get();
 
+    const reg = (id: ReturnType<typeof setInterval>) => activeIntervals.push(id);
+
     if (activeSleep) {
       timerBanner = renderTimerBanner(
         '😴 Sleeping',
@@ -78,12 +81,13 @@ export function renderDashboard(): HTMLElement {
             showToast(e.message, 'error');
           }
         },
+        reg,
       );
       screen.appendChild(timerBanner);
     } else {
       // Baby is awake — show awake timer if we know when they last woke up
       if (summaryData?.last_sleep_end_time) {
-        screen.appendChild(renderAwakeBanner(summaryData.last_sleep_end_time));
+        screen.appendChild(renderAwakeBanner(summaryData.last_sleep_end_time, reg));
       }
 
       if (activeFeeding) {
@@ -102,6 +106,7 @@ export function renderDashboard(): HTMLElement {
               showToast(e.message, 'error');
             }
           },
+          reg,
         );
         screen.appendChild(timerBanner);
       }
@@ -166,11 +171,11 @@ export function renderDashboard(): HTMLElement {
   return screen;
 }
 
-function renderAwakeBanner(sinceISO: string): HTMLElement {
+function renderAwakeBanner(sinceISO: string, registerInterval: (id: ReturnType<typeof setInterval>) => void): HTMLElement {
   const timeEl = h('div', { class: 'timer-banner-time' }, formatElapsed(elapsedSeconds(sinceISO)));
-  setInterval(() => {
+  registerInterval(setInterval(() => {
     timeEl.textContent = formatElapsed(elapsedSeconds(sinceISO));
-  }, 1000);
+  }, 250));
 
   return h('div', { class: 'timer-banner awake-banner', style: '--banner-color: #F59E0B' },
     h('div', { class: 'timer-banner-info' },
@@ -185,11 +190,12 @@ function renderTimerBanner(
   startTime: string,
   color: string,
   onStop: () => void,
+  registerInterval: (id: ReturnType<typeof setInterval>) => void,
 ): HTMLElement {
   const timeEl = h('div', { class: 'timer-banner-time' }, formatElapsed(elapsedSeconds(startTime)));
-  const interval = setInterval(() => {
+  registerInterval(setInterval(() => {
     timeEl.textContent = formatElapsed(elapsedSeconds(startTime));
-  }, 1000);
+  }, 250));
 
   const banner = h('div', { class: 'timer-banner', style: `--banner-color: ${color}` },
     h('div', { class: 'timer-banner-info' },
@@ -198,10 +204,7 @@ function renderTimerBanner(
     ),
     h('button', {
       class: 'timer-banner-stop',
-      onClick: () => {
-        clearInterval(interval);
-        onStop();
-      },
+      onClick: () => onStop(),
     }, 'Stop'),
   );
 
