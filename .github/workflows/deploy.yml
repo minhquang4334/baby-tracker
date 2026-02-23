@@ -40,7 +40,7 @@ jobs:
             --external:*.ttf \
             --external:*.woff \
             --external:*.woff2
-          cp frontend/index.html static/index.html
+          cp index.html ../static/index.html
 
       - name: Vet Go code
         run: go vet ./...
