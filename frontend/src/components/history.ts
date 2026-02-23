@@ -113,7 +113,7 @@ export function renderHistory(): HTMLElement {
           const onDelete = confirmDelete('Delete this sleep log?', () => api.deleteSleep(s.id), 'Sleep deleted');
           items.push({
             time: s.start_time,
-            el: timelineItem('sleep', '😴', 'Sleep', detail, s.start_time, onEdit, onDelete),
+            el: timelineItem('sleep', '😴', 'Sleep', detail, s.start_time, onEdit, onDelete, false),
           });
         }
       }
@@ -196,6 +196,7 @@ function timelineItem(
   time: string,
   onEdit: (() => void) | null = null,
   onDelete: (() => void) | null = null,
+  showTime: boolean = true,
 ): HTMLElement {
   const actions = h('div', { class: 'timeline-actions' });
   if (onEdit) {
@@ -211,15 +212,19 @@ function timelineItem(
     }, '🗑️'));
   }
 
+  const right = h('div', { class: 'timeline-right' });
+  if (showTime) right.appendChild(h('span', { class: 'timeline-time' }, formatTime(time)));
+  right.appendChild(actions);
+
   return h('div', { class: 'timeline-item' },
     h('div', { class: `timeline-dot timeline-dot-${category}` }, emoji),
     h('div', { class: 'timeline-content' },
-      h('div', { class: 'timeline-content-header' },
-        h('div', { class: 'timeline-title' }, title),
-        actions,
+      h('div', { class: 'timeline-text' },
+        h('span', { class: 'timeline-title' }, title),
+        h('span', { class: 'timeline-sep' }, ' · '),
+        h('span', { class: 'timeline-detail' }, detail),
       ),
-      h('div', { class: 'timeline-detail' }, detail),
-      h('div', { class: 'timeline-time' }, formatTime(time)),
+      right,
     ),
   );
 }
