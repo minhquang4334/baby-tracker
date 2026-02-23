@@ -58,6 +58,10 @@ jobs:
     steps:
       - name: Trigger Railway deploy
         run: |
-          curl --fail -X POST "${{ secrets.RAILWAY_DEPLOY_HOOK }}"
+          if [ -n "$RAILWAY_DEPLOY_HOOK" ]; then
+            curl --fail -X POST "$RAILWAY_DEPLOY_HOOK"
+          else
+            echo "RAILWAY_DEPLOY_HOOK secret not set, skipping deploy"
+          fi
         env:
           RAILWAY_DEPLOY_HOOK: ${{ secrets.RAILWAY_DEPLOY_HOOK }}
